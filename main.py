@@ -19,7 +19,8 @@ dp = Dispatcher()
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
-    await message.answer(f"Hello, {html.bold(message.from_user.full_name)}!")
+    # await message.answer(f"Hello, {html.bold(message.from_user.full_name)}!")
+    print(123)
 
 
 @dp.message(Command('getMe'))
@@ -76,7 +77,7 @@ async def datetime_handler(message: Message):
 
 async def main() -> None:
     bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-
+    # await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 
