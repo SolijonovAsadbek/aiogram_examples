@@ -1,8 +1,11 @@
+import re
+
 from aiogram import Router, F, html
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 
+from bot_registor.keyboard.default.button import share_location, confirm_button
 from bot_registor.states.register import FormState
 
 register_router = Router()
@@ -28,26 +31,33 @@ async def fullname_handler(message: Message, state: FSMContext):
 
 @register_router.message(FormState.birthday)
 async def birthday_handler(message: Message, state: FSMContext):
+    from bot_registor.keyboard.default.button import share_contact
     birthday = message.text
+    pattern = r'^(?:(?:19[0-9]{2}|20[0-1][0-9]|202[0-4])-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12][0-9]|3[01])|(?:0[469]|11)-(?:0[1-9]|[12][0-9]|30)|02-(?:0[1-9]|1[0-9]|2[0-8])))|(?:(?:19(?:[02468][048]|[13579][26])|20(?:[02468][048]|[13579][26])|2000|2400)-02-29)$'
+    if not re.match(pattern, birthday):
+        return await message.answer('To`g`ri ma`lumot joylang!')
     # filter
     await state.update_data(birthday=birthday)
-    await message.answer('Telefon raqam: ')
+    await message.answer('Telefon raqam: ', reply_markup=share_contact())
     await state.set_state(FormState.phone_number)
 
 
 @register_router.message(FormState.phone_number)
 async def phone_handler(message: Message, state: FSMContext):
     phone_number = message.text
+    if message.contact:
+        phone_number = message.contact.phone_number
     # filter
     await state.update_data(phone=phone_number)
-    await message.answer('Ish joyingizni lakatsiyasini ulashing: ')
+    await message.answer('Ish joyingizni lakatsiyasini ulashing: ', reply_markup=share_location())
     await state.set_state(FormState.work_address)
 
 
 @register_router.message(FormState.work_address)
 async def address_handler(message: Message, state: FSMContext):
     work_address = message.text
-    # filter
+    if message.location:
+        work_address = message.location.latitude, message.location.longitude
     await state.update_data(location=work_address)
     datas = await state.get_data()
     fullname = datas.get('fullname', 'N/A')
@@ -62,7 +72,7 @@ async def address_handler(message: Message, state: FSMContext):
                  f"Ish joyi: {html.bold(location)}\n"
                  f"Chat ID: {html.bold(user_chat_id)}\n"
                  f"Username: @{html.bold(username)}")
-    await message.answer(f'Ma`lumotlaringizni tasdiqlaysizmi?\n\n {user_data}')
+    await message.answer(f'Ma`lumotlaringizni tasdiqlaysizmi?\n\n{user_data}', reply_markup=confirm_button())
     await state.set_state(FormState.confirm)
 
 
@@ -79,12 +89,13 @@ async def confirm_handler(message: Message, state: FSMContext):
         user_chat_id = message.from_user.id
         username = message.from_user.username
         # db.save()
-        await message.answer('Botdan foydalanishga xush kelibsiz!')
+        await message.answer('Botdan foydalanishga xush kelibsiz!', reply_markup=ReplyKeyboardRemove())
         await state.clear()
 
     # Yoq: /register ga qaytaramiz!
     elif confirm.casefold() == 'yo`q':
-        await message.answer('Qayta ro`yxatdan o`tish uchun  👉 /register kamandasini bosing')
+        await message.answer('Qayta ro`yxatdan o`tish uchun  👉 /register kamandasini bosing',
+                             reply_markup=ReplyKeyboardRemove())
         await state.clear()
     else:
         await message.reply('Ha yoki Yo`q bilan tasdiqlang iltimos!')
