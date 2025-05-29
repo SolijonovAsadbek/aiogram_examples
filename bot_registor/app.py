@@ -6,13 +6,14 @@ from os import getenv
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.fsm.storage.memory import MemoryStorage
 from dotenv import load_dotenv
 
 # Bot token can be obtained via https://t.me/BotFather
 load_dotenv()
 TOKEN = getenv("BOT_TOKEN")
 
-dp = Dispatcher()
+dp = Dispatcher(storage=MemoryStorage())
 
 
 async def main() -> None:
