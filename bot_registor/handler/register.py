@@ -1,12 +1,14 @@
 import re
+from datetime import datetime
 
 from aiogram import Router, F, html
 from aiogram.filters import Command
 from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
 
-from bot_registor.keyboard.default.button import share_location, confirm_button
-from bot_registor.states.register import FormState
+from keyboard.default.button import share_location, confirm_button
+from states.register import FormState
+from utils.db.psql_db import User, session
 
 register_router = Router()
 
@@ -31,7 +33,7 @@ async def fullname_handler(message: Message, state: FSMContext):
 
 @register_router.message(FormState.birthday)
 async def birthday_handler(message: Message, state: FSMContext):
-    from bot_registor.keyboard.default.button import share_contact
+    from keyboard.default.button import share_contact
     birthday = message.text
     pattern = r'^(?:(?:19[0-9]{2}|20[0-1][0-9]|202[0-4])-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12][0-9]|3[01])|(?:0[469]|11)-(?:0[1-9]|[12][0-9]|30)|02-(?:0[1-9]|1[0-9]|2[0-8])))|(?:(?:19(?:[02468][048]|[13579][26])|20(?:[02468][048]|[13579][26])|2000|2400)-02-29)$'
     if not re.match(pattern, birthday):
@@ -82,13 +84,18 @@ async def confirm_handler(message: Message, state: FSMContext):
 
     if confirm.casefold() == 'ha':
         datas = await state.get_data()
-        fullname = datas.get('fullname', 'N/A')
-        birthday = datas.get('birthday', 'N/A')
-        phone = datas.get('phone', 'N/A')
-        location = datas.get('location', 'N/A')
+        fullname = datas.get('fullname')
+        birthday = datetime.strptime(datas.get('birthday'), '%Y-%m-%d')
+        phone = datas.get('phone')
+        location = datas.get('location')
         user_chat_id = message.from_user.id
         username = message.from_user.username
-        # db.save()
+
+        # database saqlashga tayyorlash
+        user = User(fullname=fullname, birthday=birthday, phone=phone,
+                    address=location, username=username, chat_id=user_chat_id)
+        user.save(session=session)
+
         await message.answer('Botdan foydalanishga xush kelibsiz!', reply_markup=ReplyKeyboardRemove())
         await state.clear()
 

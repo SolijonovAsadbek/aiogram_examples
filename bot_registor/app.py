@@ -17,7 +17,7 @@ dp = Dispatcher(storage=MemoryStorage())
 
 
 async def main() -> None:
-    from bot_registor.handler import start_router, register_router
+    from handler import start_router, register_router
 
     bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp.include_routers(start_router, register_router)
