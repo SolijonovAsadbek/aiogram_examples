@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import sys
+from enum import Enum
 from os import getenv
 
 from aiogram import Bot, Dispatcher, html, F
@@ -20,6 +21,11 @@ dp = Dispatcher()
 smile_data = [('☹️', 'Hafa'), ('😐', 'Jiddiy'), ('🙂', 'Tabassum'), ('🤩', 'Baxtli')]
 
 
+class Action(Enum):
+    PREVIOUS = 'prev'
+    NEXT = 'next'
+
+
 class PageCallbackData(CallbackData, prefix='page'):  # page:prev:2 page:next:2
     action: str
     page: int
@@ -30,14 +36,14 @@ def page_keyboard(page: int = 0):
         [
             InlineKeyboardButton(
                 text=f'⬅️{page - 1}',
-                callback_data=PageCallbackData(action='prev', page=page).pack()),
+                callback_data=PageCallbackData(action=Action.PREVIOUS, page=page).pack()),
 
             InlineKeyboardButton(
                 text=f'{page}', callback_data=f'{page}'),
 
             InlineKeyboardButton(
                 text=f'{page + 1}➡️',
-                callback_data=PageCallbackData(action='next', page=page).pack())
+                callback_data=PageCallbackData(action=Action.NEXT, page=page).pack())
         ]
     ]
 
@@ -70,9 +76,9 @@ async def callback_query_page_handler(call: CallbackQuery, callback_data: PageCa
     page = callback_data.page
     action = callback_data.action
 
-    if 0 <= page < len(smile_data) and action == 'next':
+    if 0 <= page < len(smile_data) and action == Action.NEXT:
         page += 1
-    elif page > 0 and action == 'prev':
+    elif page > 0 and action == Action.PREVIOUS:
         page -= 1
 
     smile_text = smile_data[page][0]  # + ' - ' + smile_data[page][1]
