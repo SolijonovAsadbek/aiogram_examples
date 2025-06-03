@@ -29,15 +29,26 @@ def page_keyboard(page: int = 0):
     kbs = [
         [
             InlineKeyboardButton(
-                text='⬅️ Avvalgi',
+                text=f'⬅️{page - 1}',
                 callback_data=PageCallbackData(action='prev', page=page).pack()),
 
             InlineKeyboardButton(
-                text='➡️ Keyingi',
-                callback_data=PageCallbackData(action='next', page=page).pack())
+                text=f'{page}', callback_data=f'{page}'),
 
+            InlineKeyboardButton(
+                text=f'{page + 1}➡️',
+                callback_data=PageCallbackData(action='next', page=page).pack())
         ]
     ]
+
+    rkbs = kbs.pop(0)
+
+    if page == 0:
+        rkbs.pop(0)
+    elif page == len(smile_data) - 1:
+        rkbs.pop()
+
+    kbs.append(rkbs)
 
     ikbs = InlineKeyboardMarkup(inline_keyboard=kbs)
     return ikbs
@@ -51,7 +62,7 @@ async def command_start_handler(message: Message) -> None:
 
 @dp.message(Command('page'))
 async def page_handler(message: Message):
-    await message.answer(f"{smile_data[0][0]} - {smile_data[0][1]}", reply_markup=page_keyboard())
+    await message.answer(f"{smile_data[0][0]}", reply_markup=page_keyboard())
 
 
 @dp.callback_query(PageCallbackData.filter())
@@ -64,10 +75,12 @@ async def callback_query_page_handler(call: CallbackQuery, callback_data: PageCa
     elif page > 0 and action == 'prev':
         page -= 1
 
-    smile_text = smile_data[page][0] + ' - ' + smile_data[page][1]
+    smile_text = smile_data[page][0]  # + ' - ' + smile_data[page][1]
+
     if smile_text != call.message.text:
         await call.message.edit_text(smile_text, reply_markup=page_keyboard(page))
-        await call.answer(cache_time=60)
+
+        await call.answer(cache_time=1)
 
 
 async def main() -> None:
