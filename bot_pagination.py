@@ -8,7 +8,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command
 from aiogram.filters.callback_data import CallbackData
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from dotenv import load_dotenv
 
 # Bot token can be obtained via https://t.me/BotFather
@@ -17,7 +17,7 @@ TOKEN = getenv("BOT_TOKEN")
 
 dp = Dispatcher()
 
-smile_data = [('☹️', ' Hafa'), ('😐', 'Jiddiy'), ('🙂', 'Tabassum'), ('🤩', 'Baxtli')]
+smile_data = [('☹️', 'Hafa'), ('😐', 'Jiddiy'), ('🙂', 'Tabassum'), ('🤩', 'Baxtli')]
 
 
 class PageCallbackData(CallbackData, prefix='page'):  # page:prev:2 page:next:2
@@ -45,7 +45,29 @@ def page_keyboard(page: int = 0):
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
-    await message.answer(f"Hello, {html.bold(message.from_user.full_name)}!")
+    await message.answer(f"Hello, {html.bold(message.from_user.full_name)}!\n"
+                         f"Sahifalash uchun /page kamadasini yozing!")
+
+
+@dp.message(Command('page'))
+async def page_handler(message: Message):
+    await message.answer(f"{smile_data[0][0]} - {smile_data[0][1]}", reply_markup=page_keyboard())
+
+
+@dp.callback_query(PageCallbackData.filter())
+async def callback_query_page_handler(call: CallbackQuery, callback_data: PageCallbackData):
+    page = callback_data.page
+    action = callback_data.action
+
+    if 0 <= page < len(smile_data) and action == 'next':
+        page += 1
+    elif page > 0 and action == 'prev':
+        page -= 1
+
+    smile_text = smile_data[page][0] + ' - ' + smile_data[page][1]
+    if smile_text != call.message.text:
+        await call.message.edit_text(smile_text, reply_markup=page_keyboard(page))
+        await call.answer(cache_time=60)
 
 
 async def main() -> None:
