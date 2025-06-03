@@ -9,6 +9,7 @@ from aiogram.fsm.context import FSMContext
 from keyboard.default.button import share_location, confirm_button
 from states.register import FormState
 from utils.db.psql_db import User, session
+from utils.db.psql_pscopg import save_user
 
 register_router = Router()
 
@@ -85,17 +86,19 @@ async def confirm_handler(message: Message, state: FSMContext):
     if confirm.casefold() == 'ha':
         datas = await state.get_data()
         fullname = datas.get('fullname')
-        birthday = datetime.strptime(datas.get('birthday'), '%Y-%m-%d')
+        birthday = datetime.strptime(datas.get('birthday'), '%Y-%m-%d').date()
         phone = datas.get('phone')
         location = datas.get('location')
         user_chat_id = message.from_user.id
         username = message.from_user.username
 
         # database saqlashga tayyorlash
-        user = User(fullname=fullname, birthday=birthday, phone=phone,
-                    address=location, username=username, chat_id=user_chat_id)
-        user.save(session=session)
+        # user = User(fullname=fullname, birthday=birthday, phone=phone,
+        #             address=location, username=username, chat_id=user_chat_id)
+        # user.save(session=session)
 
+        save_user(chat_id=user_chat_id, username=username, phone=phone, fullname=fullname, address=location,
+                  birthday=birthday)
         await message.answer('Botdan foydalanishga xush kelibsiz!', reply_markup=ReplyKeyboardRemove())
         await state.clear()
 
