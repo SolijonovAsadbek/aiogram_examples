@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import sys
-from enum import Enum
+from enum import Enum, Flag
 from os import getenv
 
 from aiogram import Bot, Dispatcher, html, F
@@ -36,14 +36,14 @@ def page_keyboard(page: int = 0):
         [
             InlineKeyboardButton(
                 text=f'⬅️{page - 1}',
-                callback_data=PageCallbackData(action=Action.PREVIOUS, page=page).pack()),
+                callback_data=PageCallbackData(action=Action.PREVIOUS.value, page=page).pack()),
 
             InlineKeyboardButton(
                 text=f'{page}', callback_data=f'{page}'),
 
             InlineKeyboardButton(
                 text=f'{page + 1}➡️',
-                callback_data=PageCallbackData(action=Action.NEXT, page=page).pack())
+                callback_data=PageCallbackData(action=Action.NEXT.value, page=page).pack())
         ]
     ]
 
@@ -76,9 +76,9 @@ async def callback_query_page_handler(call: CallbackQuery, callback_data: PageCa
     page = callback_data.page
     action = callback_data.action
 
-    if 0 <= page < len(smile_data) and action == Action.NEXT:
+    if 0 <= page < len(smile_data) and action == Action.NEXT.value:
         page += 1
-    elif page > 0 and action == Action.PREVIOUS:
+    elif page > 0 and action == Action.PREVIOUS.value:
         page -= 1
 
     smile_text = smile_data[page][0]  # + ' - ' + smile_data[page][1]
